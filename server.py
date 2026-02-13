@@ -44,20 +44,6 @@ async def websocket_handler(request):
                 print(f"[Server] Received type: {data.get('type')}, size: {len(message_text)} bytes")
                 print(f"[Server] Message: {message_text}")
 
-            elif msg.type == aiohttp.WSMsgType.BINARY:
-                print(f"[Server] Binary message received: {len(msg.data)} bytes")
-                disconnected = []
-                for pid, peer_info in list(connected_peers.items()):
-                    peer_ws = peer_info["ws"]
-                    if peer_ws is not ws:
-                        success = await send_to_peer(peer_ws, msg.data, is_binary=True)
-                        if not success:
-                            disconnected.append(pid)
-
-                # Clean up disconnected peers
-                for pid in disconnected:
-                    remove_peer(pid)
-
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 print(f"[!] WebSocket error from {peer_ip}: {ws.exception()}")
 
