@@ -1,15 +1,10 @@
 # peer.py
 
 from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceCandidate
-import tkinter as tk
 import aiohttp
 import asyncio
-import base64
 import uuid
 import json
-import math
-import sys
-import os
 
 SIGNALING_SERVER = 'ws://3.22.241.217:8080/ws'
 
@@ -54,6 +49,7 @@ class PeerClient:
         @self.pc.on("icecandidate")
         async def on_icecandidate(event):
             if event.candidate:
+                print("Setup peer connection!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print(f"[ICE] New candidate gathered: {event.candidate}")
                 await self.ws.send_str(json.dumps({
                     "type": "candidate",
@@ -65,6 +61,7 @@ class PeerClient:
     async def create_offer_if_needed(self):
         # Simple rule: UUIDs ending in '0' create the offer
         if self.peer_id.endswith('0'):
+            print("Create Offer!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             offer = await self.pc.createOffer()
             await self.pc.setLocalDescription(offer)
             await self.ws.send_str(json.dumps({
@@ -93,6 +90,7 @@ class PeerClient:
 
     async def handle_offer(self, data):
         try:
+            print("Handle Offer!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             await self.pc.setRemoteDescription(RTCSessionDescription(data["sdp"], "offer"))
             answer = await self.pc.createAnswer()
             await self.pc.setLocalDescription(answer)
@@ -105,11 +103,13 @@ class PeerClient:
 
     async def handle_answer(self, data):
         try:
+            print("Handle Answer!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             await self.pc.setRemoteDescription(RTCSessionDescription(data["sdp"], "answer"))
         except Exception as e:
             print(f"[!] Error handling answer: {e}")
 
     async def handle_candidate(self, data):
+        print("handle Candidate!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         candidate = RTCIceCandidate(
             sdp=data["candidate"],
             sdpMid=data["sdpMid"],
