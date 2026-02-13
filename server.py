@@ -41,7 +41,8 @@ async def websocket_handler(request):
                 for pid in disconnected:
                     remove_peer(pid)
 
-                print(f"[Server] Received type: {data.get('type')}, size: {len(json.dumps(data))} bytes")
+                print(f"[Server] Received type: {data.get('type')}, size: {len(message_text)} bytes")
+                print(f"[Server] Message: {message_text}")
 
             elif msg.type == aiohttp.WSMsgType.BINARY:
                 print(f"[Server] Binary message received: {len(msg.data)} bytes")
@@ -164,6 +165,10 @@ ssh -i "server.pem" ubuntu@3.22.241.217
 
     ### EDIT
     nano signaling_server.py
+    alt + \ (go to top)
+    alt + t (delete all after)
+    right click (paste)
+    ctrl + x (write)
 
     ### KILLING
     sudo lsof -i :8080  # find PID
