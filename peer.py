@@ -1,6 +1,6 @@
 # peer.py
 
-from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceCandidate
+from aiortc import RTCPeerConnection
 import aiohttp
 import asyncio
 import uuid
@@ -15,6 +15,10 @@ class PeerClient:
         self.ws = None
         self.session = None
 
+    ###
+    ### Setup
+    ###
+
     async def connect_to_signaling(self):
         self.session = aiohttp.ClientSession()
         self.ws = await self.session.ws_connect(SIGNALING_SERVER, max_msg_size=2**22)  # 4MB chunks
@@ -26,24 +30,6 @@ class PeerClient:
             "type": "register",
             "peer_id": self.peer_id
         }))
-
-    async def chat(self, msg):
-        try:
-            await self.ws.send_str(json.dumps({
-                "type": "chat",
-                "message": msg,
-                "from": self.peer_id
-            }))
-        except Exception as e:
-            print(f"[!] Failed to send chat message: {e}")
-            await self.close()
-
-    async def input_loop(self):
-        while True:
-            print("> ", end="", flush=True)
-            msg = await asyncio.to_thread(input)
-
-            await self.chat(msg)
 
     async def handle_signaling(self):
         try:
@@ -58,9 +44,43 @@ class PeerClient:
             print(f"[!] Unexpected error in signaling handler: {e}")
             await self.close()
 
+
+    ###
+    ### Chat Calls
+    ###
+
+    async def chat(self, msg):
+        try:
+            await self.ws.send_str(json.dumps({
+                "type": "chat",
+                "message": msg,
+                "from": self.peer_id
+            }))
+        except Exception as e:
+            print(f"[!] Failed to send chat message: {e}")
+            await self.close()
+
     async def handle_chat(self, data):
         if data.get("from") != self.peer_id:
             print(f"\n[Chat] {data['message']}\n> ", end="", flush=True)
+
+
+
+    ###
+    ### Keep CLI Loop
+    ###
+    
+    async def input_loop(self):
+        while True:
+            print("> ", end="", flush=True)
+            msg = await asyncio.to_thread(input)
+
+            await self.chat(msg)
+    
+
+    ###
+    ### Run client
+    ###
 
     async def run(self):
         print(f"=== Starting Peer Client ===")
