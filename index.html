@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Password Success: {{var2}}</h1>
+
+    <!--Login-->
+    <form action="/" method="post">
+        <input type="text" placeHolder="Username" name="username">
+        <input type="text" placeHolder="Password" name="password">
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <!--Create an Account-->
+    <form action="/c" method="post">
+        <button type="submit">Sign Up!</button>
+    </form>
+
+    <!--<script type="application/javascript">
+        function getIP(json) {
+          document.write("My public IP address is: ", json.ip);
+          //console.log("My public IP address is: " + json.ip)
+        }
+      </script>
+      
+      <script type="application/javascript" src="https://api.ipify.org?format=jsonp&callback=getIP"></script>
+    -->
+</body>
+</html>

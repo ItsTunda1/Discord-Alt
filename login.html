@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Logged In!!! :></h1>
+
+    <h1>Username: {{loginID}}</h1>
+    <h1>Loggin ID: {{id}}</h1>
+    <h1>Balance: ${{bal}}</h1>
+
+    <!--Add Money-->
+    <form action="/m" method="post">
+        <input type="text" placeHolder="$0.00" name="money">
+        <input type="hidden" name="username" value="{{loginID}}">
+
+        <button type="submit">Add</button>
+    </form>
+
+    <!--List-->
+    <h1>My Custom List of Items</h1>
+    <ul>
+        % for item in items:
+            <li>{{item}}</li>
+        % end
+    </ul>
+
+    <!--Back-->
+    <form action="/" method="post">
+        <button type="submit">Back</button>
+    </form>
+</body>
+</html>
