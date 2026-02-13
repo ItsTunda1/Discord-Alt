@@ -45,30 +45,6 @@ class PeerClient:
 
             await self.chat(msg)
 
-    async def setup_peer_connection(self):
-        @self.pc.on("icecandidate")
-        async def on_icecandidate(event):
-            if event.candidate:
-                print("Setup peer connection!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print(f"[ICE] New candidate gathered: {event.candidate}")
-                await self.ws.send_str(json.dumps({
-                    "type": "candidate",
-                    "candidate": event.candidate.to_sdp(),
-                    "sdpMid": event.candidate.sdp_mid,
-                    "sdpMLineIndex": event.candidate.sdp_mline_index
-                }))
-
-    async def create_offer_if_needed(self):
-        # Simple rule: UUIDs ending in '0' create the offer
-        if self.peer_id.endswith('0'):
-            print("Create Offer!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            offer = await self.pc.createOffer()
-            await self.pc.setLocalDescription(offer)
-            await self.ws.send_str(json.dumps({
-                "type": "offer",
-                "sdp": self.pc.localDescription.sdp
-            }))
-
     async def handle_signaling(self):
         try:
             async for msg in self.ws:
@@ -76,47 +52,11 @@ class PeerClient:
                     data = json.loads(msg.data)
                     msg_type = data.get("type")
 
-                    if msg_type == "offer":
-                        await self.handle_offer(data)
-                    elif msg_type == "answer":
-                        await self.handle_answer(data)
-                    elif msg_type == "candidate":
-                        await self.handle_candidate(data)
-                    elif msg_type == "chat":
+                    if msg_type == "chat":
                         await self.handle_chat(data)
         except Exception as e:
             print(f"[!] Unexpected error in signaling handler: {e}")
             await self.close()
-
-    async def handle_offer(self, data):
-        try:
-            print("Handle Offer!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            await self.pc.setRemoteDescription(RTCSessionDescription(data["sdp"], "offer"))
-            answer = await self.pc.createAnswer()
-            await self.pc.setLocalDescription(answer)
-            await self.ws.send_str(json.dumps({
-                "type": "answer",
-                "sdp": self.pc.localDescription.sdp
-            }))
-        except Exception as e:
-            print(f"[!] Error handling offer: {e}")
-
-    async def handle_answer(self, data):
-        try:
-            print("Handle Answer!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            await self.pc.setRemoteDescription(RTCSessionDescription(data["sdp"], "answer"))
-        except Exception as e:
-            print(f"[!] Error handling answer: {e}")
-
-    async def handle_candidate(self, data):
-        print("handle Candidate!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        candidate = RTCIceCandidate(
-            sdp=data["candidate"],
-            sdpMid=data["sdpMid"],
-            sdpMLineIndex=data["sdpMLineIndex"]
-        )
-        print(f"[ICE] Received candidate from peer: {candidate}")
-        await self.pc.addIceCandidate(candidate)
 
     async def handle_chat(self, data):
         if data.get("from") != self.peer_id:
@@ -127,8 +67,6 @@ class PeerClient:
         print(f"Your Peer ID: {self.peer_id}")
 
         await self.connect_to_signaling()
-        await self.setup_peer_connection()
-        await self.create_offer_if_needed()
 
         await self.chat("Logged in")
 
