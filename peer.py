@@ -14,6 +14,7 @@ class PeerClient:
         self.pc = RTCPeerConnection()
         self.ws = None
         self.session = None
+        self.message_callback = None  # Store reference to message callback
 
     ###
     ### Setup
@@ -76,6 +77,9 @@ class PeerClient:
     async def handle_chat(self, data):
         if data.get("from") != self.peer_id:
             print(f"\n[Chat] {data['message']}\n> ", end="", flush=True)
+            # Send the message back as JSON to Bottle app's endpoint
+            if self.message_callback:
+                self.message_callback(data['message'])
 
 
 
