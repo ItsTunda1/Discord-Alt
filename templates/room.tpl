@@ -167,18 +167,20 @@
         <div class="chat"></div>
       </div>
       <div class="bottombar">
-        <input
-          class="input-wide"
-          id="messageInput"
-          type="text"
-          aria-label="Message"
-        />
-        <button
-          class="send"
-          id="sendButton"
-          type="button"
-          aria-label="Send"
-        ></button>
+        <form action="post" target="/chat/message">
+          <input
+            class="input-wide"
+            id="messageInput"
+            type="text"
+            aria-label="Message"
+          />
+          <button
+            class="send"
+            id="sendButton"
+            type="button"
+            aria-label="Send"
+          ></button>
+        </form>
       </div>
     </main>
     <script>
