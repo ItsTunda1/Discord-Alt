@@ -48,15 +48,18 @@ def create_room():
 
 
 
-@app.route('/chat/<message>')
-def handle_chat(message):
-    if client:
-        asyncio.run(client.chat(message))
-        return f"Message sent: {message}"
-    else:
+@app.post('/chat/message')
+def handle_chat():
+    # 1. Properly get the message from a form or JSON
+    message = request.forms.get('message')
+    print(f"Recieved the message: {message}")
+    if not client:
         return "Peer client not connected!"
-
-
+    if message:
+        # 2. Run the async chat client
+        asyncio.run(client.chat(message))
+        return {"status": "success", "sent": message}
+    return "No message provided"
 
 
 

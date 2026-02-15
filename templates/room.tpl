@@ -167,8 +167,9 @@
         <div class="chat"></div>
       </div>
       <div class="bottombar">
-        <form action="post" target="/chat/message">
+        <form method="post" action="/chat/message">
           <input
+            name="message"
             class="input-wide"
             id="messageInput"
             type="text"
@@ -177,7 +178,7 @@
           <button
             class="send"
             id="sendButton"
-            type="button"
+            type="submit"
             aria-label="Send"
           ></button>
         </form>
@@ -187,6 +188,7 @@
       const chat = document.querySelector(".chat");
       const messageInput = document.getElementById("messageInput");
       const sendButton = document.getElementById("sendButton");
+
       const messages = [
         { type: "sent", content: "Message one" },
         { type: "received", content: "Message two" },
@@ -226,23 +228,24 @@
         return `${trimmed.slice(0, 197)}...`;
       }
 
-      function sendMessage() {
+      function sendMessage(e) {
+        e.preventDefault();
         const text = messageInput.value.trim();
         if (!text) {
           return;
         }
 
+        const formData = newFormData();
+        formData.append("message", text);
         messages.push({ type: "sent", content: clampMessage(text) });
         renderMessages(true);
         messageInput.value = "";
         renderMessages(true);
       }
 
-      sendButton.addEventListener("click", sendMessage);
+      sendButton.addEventListener("click", sendMessage(e));
       messageInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          sendMessage();
-        }
+        const text = messageInput.value.trim();
       });
 
       renderMessages(true);

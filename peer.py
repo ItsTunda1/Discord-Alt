@@ -44,6 +44,19 @@ class PeerClient:
             print(f"[!] Unexpected error in signaling handler: {e}")
             await self.close()
 
+# @app.post('/chat/message')
+# def handle_chat():
+#     # 1. Properly get the message from a form or JSON
+#     message = request.forms.get('message')
+#     print(f"Recieved the message: {message}")
+#     if not client:
+#         return "Peer client not connected!"
+#     if message:
+#         # 2. Run the async chat client
+#         asyncio.run(client.chat(message))
+#         return {"status": "success", "sent": message}
+#     return "No message provided"
+
 
     ###
     ### Chat Calls
