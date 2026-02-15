@@ -1,5 +1,9 @@
 from pathlib import Path
 from uuid import uuid4
+import threading
+
+# AWS Peer Connection
+import peer
 
 from bottle import Bottle, request, static_file, template, redirect
 
@@ -38,5 +42,23 @@ def create_room():
     redirect(f"/room?room={room_id}")
 
 
-if __name__ == "__main__":
+
+
+
+def run_bottle():
+    # Run Bottle app in a separate thread
     app.run(host="localhost", port=8080)
+
+def run_peer():
+    # Run the AWS peer client in the main asyncio event loop
+    client = peer.PeerClient()
+    peer.asyncio.run(client.run())
+
+if __name__ == "__main__":
+    # Start Bottle in a separate thread
+    bottle_thread = threading.Thread(target=run_bottle)
+    bottle_thread.daemon = True  # Daemon thread will exit when the main program exits
+    bottle_thread.start()
+
+    # Run the AWS peer client concurrently with Bottle
+    run_peer()
