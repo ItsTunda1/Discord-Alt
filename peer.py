@@ -91,7 +91,7 @@ class PeerClient:
         await self.chat("Logged in")
 
         # Start input loop for chat
-        #asyncio.create_task(self.input_loop())                                         # for CLI
+        asyncio.create_task(self.input_loop())                                         # for CLI
 
         # Listen to signaling messages
         await self.handle_signaling()
