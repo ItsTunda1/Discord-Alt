@@ -62,14 +62,31 @@ def handle_chat(message):
 
 
 
+
+def send_message_to_bottle(message):
+    print("test:", message)
+    '''response.content_type = 'application/json'
+    response.status = 200
+    return json.dumps({
+        "status": "message_received",
+        "message": message
+    })'''
+
+
+
 def run_bottle():
     # Run Bottle app in a separate thread
     app.run(host="localhost", port=8080)
 
 def run_peer():
     global client
+
     # Run the AWS peer client in the main asyncio event loop
     client = peer.PeerClient()
+
+    # Set the callback to handle incoming chat messages from peer client
+    client.message_callback = send_message_to_bottle  # Set callback function
+
     peer.asyncio.run(client.run())
 
 if __name__ == "__main__":
