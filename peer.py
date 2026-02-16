@@ -39,24 +39,12 @@ class PeerClient:
                     data = json.loads(msg.data)
                     msg_type = data.get("type")
 
-                    if msg_type == "chat":
+                    if msg_type in {"chat", "chat_message"}:
                         await self.handle_chat(data)
         except Exception as e:
             print(f"[!] Unexpected error in signaling handler: {e}")
             await self.close()
 
-# @app.post('/chat/message')
-# def handle_chat():
-#     # 1. Properly get the message from a form or JSON
-#     message = request.forms.get('message')
-#     print(f"Recieved the message: {message}")
-#     if not client:
-#         return "Peer client not connected!"
-#     if message:
-#         # 2. Run the async chat client
-#         asyncio.run(client.chat(message))
-#         return {"status": "success", "sent": message}
-#     return "No message provided"
 
 
     ###
@@ -75,11 +63,13 @@ class PeerClient:
             await self.close()
 
     async def handle_chat(self, data):
-        if data.get("from") != self.peer_id:
-            print(f"\n[Chat] {data['message']}\n> ", end="", flush=True)
+        sender = data.get("from") or data.get("sender")
+        message = data.get("message") or data.get("content")
+        if sender != self.peer_id and message:
+            print(f"\n[Chat] {message}\n> ", end="", flush=True)
             # Send the message back as JSON to Bottle app's endpoint
             if self.message_callback:
-                self.message_callback(data['message'])
+                self.message_callback(message)
 
 
 
@@ -94,6 +84,10 @@ class PeerClient:
 
             await self.chat(msg)
     
+    async def broadcast_chat(self, text):
+        if self.ws and not self.ws.closed:
+            await self.chat(text)
+            print(f"[>] Broadcasted message: {text}")
 
     ###
     ### Run client
@@ -105,7 +99,7 @@ class PeerClient:
 
         await self.connect_to_signaling()
 
-        await self.chat("Logged in")
+        await self.chat("A user has logged in")
 
         # Start input loop for chat
         asyncio.create_task(self.input_loop())                                         # for CLI

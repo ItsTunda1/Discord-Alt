@@ -121,10 +121,20 @@
       .bottombar {
         background: var(--blue);
         height: 70px;
+        padding: 0 16px;
+      }
+
+      .composer {
+        height: 100%;
+        display: flex;
+        align-items: center;
+      }
+
+      .composer form {
+        width: 100%;
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 0 16px;
       }
 
       .input-wide {
@@ -136,6 +146,7 @@
         padding: 0 8px;
         font-size: 0.9rem;
         color: var(--ink-dark);
+        min-width: 0;
       }
 
       .send {
@@ -161,48 +172,38 @@
           <a class="back-link" href="/" aria-label="Back to home">&lt;</a>
           <span class="title">Cord</span>
         </div>
-        <span>Room: {{ room_id }}</span>
+        <span>Main Room</span>
       </div>
       <div class="screen">
         <div class="chat"></div>
       </div>
       <div class="bottombar">
-        <form method="post" action="/chat/message">
-          <input
-            name="message"
-            class="input-wide"
-            id="messageInput"
-            type="text"
-            aria-label="Message"
-          />
-          <button
-            class="send"
-            id="sendButton"
-            type="submit"
-            aria-label="Send"
-          ></button>
-        </form>
+        <div class="composer">
+          <form method="post" action="/chat/message">
+            <input
+              name="message"
+              class="input-wide"
+              id="messageInput"
+              type="text"
+              aria-label="Message"
+            />
+            <button
+              class="send"
+              id="sendButton"
+              type="submit"
+              aria-label="Send"
+            ></button>
+          </form>
+        </div>
       </div>
     </main>
     <script>
       const chat = document.querySelector(".chat");
       const messageInput = document.getElementById("messageInput");
-      const sendButton = document.getElementById("sendButton");
-
-      const messages = [
-        { type: "sent", content: "Message one" },
-        { type: "received", content: "Message two" },
-        { type: "sent", content: "Message three" },
-        { type: "received", content: "Message four" },
-        { type: "sent", content: "Message five" },
-        { type: "received", content: "Message six" },
-        { type: "sent", content: "Message seven" },
-        { type: "received", content: "Message eight" },
-        { type: "sent", content: "Message nine" },
-        { type: "received", content: "Message ten" },
-        { type: "sent", content: "Message eleven" },
-        { type: "received", content: "Message twelve" },
-      ];
+      const form = document.querySelector(".bottombar form");
+      const peerId = crypto.randomUUID();
+      const socket = new WebSocket("ws://3.22.241.217:8080/ws");
+      const messages = [];
 
       function renderMessages(forceScroll = false) {
         const distanceFromBottom =
@@ -228,27 +229,48 @@
         return `${trimmed.slice(0, 197)}...`;
       }
 
-      function sendMessage(e) {
-        e.preventDefault();
+      function addMessage(type, payload, forceScroll = false) {
+        const content = payload.content ?? payload.message ?? "";
+        messages.push({ type, content });
+        renderMessages(forceScroll);
+      }
+
+      socket.addEventListener("open", () => {
+        socket.send(
+          JSON.stringify({
+            type: "register",
+            peer_id: peerId,
+          }),
+        );
+      });
+
+      socket.addEventListener("message", (event) => {
+        let payload = null;
+        try {
+          payload = JSON.parse(event.data);
+        } catch (err) {
+          payload = { type: "unknown", raw: String(event.data) };
+        }
+        addMessage("received", payload);
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
         const text = messageInput.value.trim();
-        if (!text) {
+        if (!text || socket.readyState !== WebSocket.OPEN) {
           return;
         }
 
-        const formData = newFormData();
-        formData.append("message", text);
-        messages.push({ type: "sent", content: clampMessage(text) });
-        renderMessages(true);
+        const payload = {
+          type: "chat",
+          content: clampMessage(text),
+          message: clampMessage(text),
+          from: peerId,
+        };
+        socket.send(JSON.stringify(payload));
+        addMessage("sent", payload, true);
         messageInput.value = "";
-        renderMessages(true);
-      }
-
-      sendButton.addEventListener("click", sendMessage(e));
-      messageInput.addEventListener("keydown", (event) => {
-        const text = messageInput.value.trim();
       });
-
-      renderMessages(true);
     </script>
   </body>
 </html>

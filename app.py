@@ -7,6 +7,7 @@ import asyncio
 import peer
 # Global reference to PeerClient instance
 client = None
+loop = None
 
 from bottle import Bottle, request, static_file, template, redirect
 
@@ -23,14 +24,6 @@ def server_static(filepath):
 
 @app.get("/")
 def index():
-    return template(
-        "welcome",
-        template_lookup=[TEMPLATE_DIR],
-    )
-
-
-@app.get("/room")
-def room():
     room_id = request.query.get("room") or ROOM_ID
     return template(
         "room",
@@ -42,7 +35,7 @@ def room():
 @app.get("/create-room")
 def create_room():
     room_id = uuid4().hex[:6]
-    redirect(f"/room?room={room_id}")
+    redirect(f"/?room={room_id}")
 
 
 
@@ -50,17 +43,14 @@ def create_room():
 
 @app.post('/chat/message')
 def handle_chat():
-    # 1. Properly get the message from a form or JSON
+    global client, loop
     message = request.forms.get('message')
-    print(f"Recieved the message: {message}")
-    if not client:
-        return "Peer client not connected!"
-    if message:
-        # 2. Run the async chat client
-        asyncio.run(client.chat(message))
-        return {"status": "success", "sent": message}
-    return "No message provided"
-
+    
+    if message and client and loop:
+        # Schedule the broadcast in the async loop
+        asyncio.run_coroutine_threadsafe(client.broadcast_chat(message), loop)
+        
+        return {"status": "success"}
 
 
 
@@ -82,15 +72,17 @@ def run_bottle():
     app.run(host="localhost", port=8080)
 
 def run_peer():
-    global client
+    global client, loop
 
-    # Run the AWS peer client in the main asyncio event loop
+    # Run the AWS peer client in a dedicated asyncio event loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     client = peer.PeerClient()
+    client.message_callback = send_message_to_bottle
 
-    # Set the callback to handle incoming chat messages from peer client
-    client.message_callback = send_message_to_bottle  # Set callback function
-
-    peer.asyncio.run(client.run())
+    loop.create_task(client.run())
+    loop.run_forever()
 
 if __name__ == "__main__":
     # Start Bottle in a separate thread
